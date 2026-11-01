@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI VIP Football Predictions (99% Winrate Engine)</title>
-  
-  <!-- Adsterra Script Integration -->
-  <script async src="https://asiafilm.org/4/bfed8707da7edd1a593d3152bed94170" crossorigin="anonymous"></script>
 
   <style>
     :root {
@@ -15,6 +12,7 @@
       --accent-green: #00e676;
       --accent-red: #ff5252;
       --accent-gold: #ffd700;
+      --accent-orange: #ff9100;
       --text-main: #f0f4f8;
       --text-muted: #8a99ad;
       --border-color: #232d3f;
@@ -87,6 +85,27 @@
 
     .hamburger-btn:hover {
       background: var(--border-color);
+    }
+
+    /* Adsterra Direct Link Click Banners (Method 2) */
+    .adsterra-banner {
+      display: block;
+      background: linear-gradient(135deg, #ff9100, #ff5252);
+      color: #000;
+      text-align: center;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      text-decoration: none;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(255, 145, 0, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .adsterra-banner:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 145, 0, 0.6);
     }
 
     /* Navigation Drawer */
@@ -289,6 +308,12 @@
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .ticket-card:hover {
+      transform: scale(1.01);
     }
 
     .ticket-header {
@@ -447,6 +472,11 @@
       <button class="hamburger-btn" onclick="toggleMenu(true)">&#9776;</button>
     </header>
 
+    <!-- Method 2: High Conversion Top Banner -->
+    <a href="https://asiafilm.org/4/bfed8707da7edd1a593d3152bed94170" target="_blank" class="adsterra-banner">
+      🔥 CLICK HERE TO UNLOCK EXCLUSIVE 100+ ODDS BOOKMAKER CODE 🔥
+    </a>
+
     <!-- Active Banner -->
     <div class="mode-banner" id="mode-banner">
       <span id="mode-title"><span class="live-dot"></span>Category: 99% Winrate Ultra-Safe Picks (5 Tickets Daily)</span>
@@ -477,11 +507,18 @@
     <div class="tickets-wrapper" id="tickets-container">
       <div class="loading-box">Connecting to live sports API...</div>
     </div>
+
+    <!-- Method 2: Bottom Conversion Banner -->
+    <a href="https://asiafilm.org/4/bfed8707da7edd1a593d3152bed94170" target="_blank" class="adsterra-banner" style="margin-top: 25px;">
+      🎁 CLAIM VIP BONUS & HIGH ODDS SLIPS HERE 🎁
+    </a>
+
   </div>
 
   <script>
     let currentDateKey = getFormattedDate(0);
     let currentCategory = "WINRATE_99";
+    const adsterraUrl = "https://asiafilm.org/4/bfed8707da7edd1a593d3152bed94170";
 
     document.addEventListener("DOMContentLoaded", () => {
       buildDateSlider();
@@ -1047,6 +1084,11 @@
 
         const card = document.createElement("div");
         card.className = "ticket-card";
+
+        // Open Adsterra link on ticket click
+        card.onclick = () => {
+          window.open(adsterraUrl, '_blank');
+        };
 
         card.innerHTML = `
           <div class="ticket-header">
