@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI VIP Football Predictions (99% Winrate Engine)</title>
+  <title>AI VIP Football Predictions</title>
 
   <style>
     :root {
@@ -336,64 +336,64 @@
 
   <div class="overlay" id="overlay" onclick="toggleMenu(false)"></div>
 
-  <!-- Navigation Drawer (Cleaned Up) -->
+  <!-- Navigation Drawer -->
   <div class="menu-drawer" id="menu-drawer">
     <div class="drawer-header">
-      <div class="drawer-title">VIP AI NAVIGATION</div>
+      <div class="drawer-title">VIP NAVIGATION</div>
       <button class="close-btn" onclick="toggleMenu(false)">&times;</button>
     </div>
     <div class="menu-item active" id="menu-winrate99" onclick="switchCategory('WINRATE_99')">
-      <span>🎯 99% Winrate (5 Tickets Daily)</span>
+      <span>99% Winrate Tips</span>
     </div>
     <div class="menu-item" id="menu-standard" onclick="switchCategory('STANDARD')">
-      <span>⚽ Daily VIP Tickets (Safe 2 Odds)</span>
+      <span>Daily VIP Tickets</span>
     </div>
     <div class="menu-item" id="menu-single" onclick="switchCategory('SINGLE')">
-      <span>🎯 Daily Single Ticket (1 Pick)</span>
+      <span>Daily Single Nap</span>
     </div>
     <div class="menu-item" id="menu-single2" onclick="switchCategory('SINGLE_2')">
-      <span>🔥 Single 2 (Single Match Pick)</span>
+      <span>Single Match Pick</span>
     </div>
     <div class="menu-item" id="menu-single3" onclick="switchCategory('SINGLE_3')">
-      <span>⚡ Single 3 (High-Winrate Safe Combo)</span>
+      <span>Safe Combo Ticket</span>
     </div>
     <div class="menu-item" id="menu-over15" onclick="switchCategory('OVER_1_5')">
-      <span>🔥 Over 1.5 Goals (Safe Low Odds)</span>
+      <span>Over 1.5 Goals</span>
     </div>
   </div>
 
   <div class="container">
     <header>
       <div class="brand-title">
-        <span>AI VIP Tips</span>
-        <span class="badge-ai" id="winrate-badge">99.1% WINRATE</span>
+        <span>VIP Tips</span>
+        <span class="badge-ai" id="winrate-badge">99.1%</span>
       </div>
       <button class="hamburger-btn" onclick="toggleMenu(true)">&#9776;</button>
     </header>
 
     <!-- Top Ad Banner -->
     <a href="https://asiafilm.org/4/bfed8707da7edd1a593d3152bed94170" target="_blank" class="adsterra-banner">
-      🔥 CLICK HERE TO UNLOCK EXCLUSIVE 100+ ODDS BOOKMAKER CODE 🔥
+      CLICK HERE TO UNLOCK EXCLUSIVE 100+ ODDS BOOKMAKER CODE
     </a>
 
     <!-- Active Banner -->
     <div class="mode-banner" id="mode-banner">
-      <span id="mode-title"><span class="live-dot"></span>Category: 99% Winrate Ultra-Safe Picks (5 Tickets Daily)</span>
+      <span id="mode-title"><span class="live-dot"></span>Category: 99% Winrate Tips</span>
     </div>
 
     <!-- Stats Dashboard -->
     <div class="stats-bar">
       <div class="stat-card">
         <div class="stat-value">99.1%</div>
-        <div class="stat-label">AI Accuracy</div>
+        <div class="stat-label">Accuracy</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">98</div>
-        <div class="stat-label">Won Tickets</div>
+        <div class="stat-label">Won</div>
       </div>
       <div class="stat-card">
         <div class="stat-value">1</div>
-        <div class="stat-label">Lost Tickets</div>
+        <div class="stat-label">Lost</div>
       </div>
     </div>
 
@@ -409,7 +409,7 @@
 
     <!-- Bottom Ad Banner -->
     <a href="https://asiafilm.org/4/bfed8707da7edd1a593d3152bed94170" target="_blank" class="adsterra-banner" style="margin-top: 25px;">
-      🎁 CLAIM VIP BONUS & HIGH ODDS SLIPS HERE 🎁
+      CLAIM VIP BONUS & HIGH ODDS SLIPS HERE
     </a>
   </div>
 
@@ -452,22 +452,22 @@
       const banner = document.getElementById("mode-title");
       if (cat === "WINRATE_99") {
         document.getElementById("menu-winrate99").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: 99% Winrate Ultra-Safe Picks (5 Tickets Daily)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: 99% Winrate Tips`;
       } else if (cat === "STANDARD") {
         document.getElementById("menu-standard").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets (Safe 2 Odds Each)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets`;
       } else if (cat === "SINGLE") {
         document.getElementById("menu-single").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Daily Single Ticket (1 Pick)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Daily Single Nap`;
       } else if (cat === "SINGLE_2") {
         document.getElementById("menu-single2").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Single 2 (Single Match Pick)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Single Match Pick`;
       } else if (cat === "SINGLE_3") {
         document.getElementById("menu-single3").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Single 3 (High-Winrate Safe Combo)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Safe Combo Ticket`;
       } else {
         document.getElementById("menu-over15").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals (Safe Low Odds)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals`;
       }
 
       loadCategoryData(currentDateKey);
@@ -544,7 +544,7 @@
         } else if (currentCategory === "SINGLE") {
           tickets = generateSingleTicket(events, dateKey, 0, "VIP Single Nap Ticket", "Over 1.5 Goals");
         } else if (currentCategory === "SINGLE_2") {
-          tickets = generateSingleTicket(events, dateKey, 1, "Single 2 Match Pick", "Double Chance (1X)");
+          tickets = generateSingleTicket(events, dateKey, 1, "Single Match Pick", "Double Chance (1X)");
         } else if (currentCategory === "SINGLE_3") {
           tickets = generateSingle3ComboTicket(events, dateKey);
         } else if (currentCategory === "OVER_1_5") {
@@ -688,7 +688,7 @@
       }
 
       return [{
-        name: "Single 3 (High-Winrate Safe Combo)",
+        name: "Safe Combo Ticket",
         totalOdds: runningOdds.toFixed(2),
         games: games
       }];
@@ -710,7 +710,7 @@
         }
 
         tickets.push({
-          name: `Safe Over 1.5 Ticket #${tNum}`,
+          name: `Over 1.5 Goals Ticket #${tNum}`,
           totalOdds: runningOdds.toFixed(2),
           games: legs
         });
@@ -728,7 +728,7 @@
 
       return [
         {
-          name: "Safe VIP Ticket #1",
+          name: "Daily VIP Ticket #1",
           totalOdds: (parseFloat(parsedGames[0].odd) * parseFloat(parsedGames[1].odd)).toFixed(2),
           games: [parsedGames[0], parsedGames[1]]
         }
