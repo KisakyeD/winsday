@@ -223,7 +223,8 @@
     .menu-item {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 10px;
       padding: 12px 14px;
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -380,29 +381,29 @@
 
   <div class="overlay" id="overlay" onclick="toggleMenu(false)"></div>
 
-  <!-- Navigation Drawer -->
+  <!-- Navigation Drawer with Icons -->
   <div class="menu-drawer" id="menu-drawer">
     <div class="drawer-header">
       <div class="drawer-title">VIP NAVIGATION</div>
       <button class="close-btn" onclick="toggleMenu(false)">&times;</button>
     </div>
     <div class="menu-item active" id="menu-winrate99" onclick="switchCategory('WINRATE_99')">
-      <span>99% Winrate Tips</span>
+      <span>🎯 99% Winrate Tips</span>
     </div>
     <div class="menu-item" id="menu-standard" onclick="switchCategory('STANDARD')">
-      <span>Daily VIP Tickets</span>
+      <span>⚽ Daily VIP Tickets</span>
     </div>
     <div class="menu-item" id="menu-single" onclick="switchCategory('SINGLE')">
-      <span>Daily Single Nap</span>
+      <span>📌 Daily Single Nap</span>
     </div>
     <div class="menu-item" id="menu-single2" onclick="switchCategory('SINGLE_2')">
-      <span>Single Match Pick</span>
+      <span>🔥 Single Match Pick</span>
     </div>
     <div class="menu-item" id="menu-single3" onclick="switchCategory('SINGLE_3')">
-      <span>Safe Combo Ticket</span>
+      <span>⚡ Safe Combo Ticket</span>
     </div>
     <div class="menu-item" id="menu-over15" onclick="switchCategory('OVER_1_5')">
-      <span>Over 1.5 Goals</span>
+      <span>🚀 Over 1.5 Goals</span>
     </div>
   </div>
 
@@ -502,22 +503,22 @@
       const banner = document.getElementById("mode-title");
       if (cat === "WINRATE_99") {
         document.getElementById("menu-winrate99").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: 99% Winrate Tips`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: 🎯 99% Winrate Tips`;
       } else if (cat === "STANDARD") {
         document.getElementById("menu-standard").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: ⚽ Daily VIP Tickets`;
       } else if (cat === "SINGLE") {
         document.getElementById("menu-single").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Daily Single Nap`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: 📌 Daily Single Nap`;
       } else if (cat === "SINGLE_2") {
         document.getElementById("menu-single2").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Single Match Pick`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: 🔥 Single Match Pick`;
       } else if (cat === "SINGLE_3") {
         document.getElementById("menu-single3").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Safe Combo Ticket`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: ⚡ Safe Combo Ticket`;
       } else {
         document.getElementById("menu-over15").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: 🚀 Over 1.5 Goals`;
       }
 
       loadCategoryData(currentDateKey);
