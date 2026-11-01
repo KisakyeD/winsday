@@ -392,7 +392,7 @@
       <button class="close-btn" onclick="toggleMenu(false)">&times;</button>
     </div>
     <div class="menu-item active" id="menu-standard" onclick="switchCategory('STANDARD')">
-      <span>⚽ Daily VIP Tickets (2 Odds)</span>
+      <span>⚽ Daily VIP Tickets (Safe 2 Odds)</span>
     </div>
     <div class="menu-item" id="menu-single" onclick="switchCategory('SINGLE')">
       <span>🎯 Daily Single Ticket (1 Pick)</span>
@@ -403,11 +403,11 @@
       <span style="font-size: 0.7rem; background: var(--accent-green); color: #000; padding: 2px 6px; border-radius: 4px;">VIP</span>
     </div>
     <div class="menu-item" id="menu-single3" onclick="switchCategory('SINGLE_3')">
-      <span>⚡ Single 3 (High-Winrate Combo)</span>
+      <span>⚡ Single 3 (High-Winrate Safe Combo)</span>
       <span style="font-size: 0.7rem; background: #00b0ff; color: #fff; padding: 2px 6px; border-radius: 4px;">COMBO</span>
     </div>
     <div class="menu-item" id="menu-over15" onclick="switchCategory('OVER_1_5')">
-      <span>🔥 Over 1.5 Goals (5 Tickets • Safe Low Odds)</span>
+      <span>🔥 Over 1.5 Goals (Safe Low Odds)</span>
       <span style="font-size: 0.7rem; background: #ff0080; color: #fff; padding: 2px 6px; border-radius: 4px;">HOT</span>
     </div>
   </div>
@@ -423,7 +423,7 @@
 
     <!-- Active Banner -->
     <div class="mode-banner" id="mode-banner">
-      <span id="mode-title"><span class="live-dot"></span>Category: Daily VIP Tickets (2 Odds Each)</span>
+      <span id="mode-title"><span class="live-dot"></span>Category: Daily VIP Tickets (Safe 2 Odds Each)</span>
     </div>
 
     <!-- Stats Dashboard -->
@@ -483,7 +483,7 @@
       const banner = document.getElementById("mode-title");
       if (cat === "STANDARD") {
         document.getElementById("menu-standard").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets (2 Odds Each)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets (Safe 2 Odds Each)`;
       } else if (cat === "SINGLE") {
         document.getElementById("menu-single").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Daily Single Ticket (1 Pick)`;
@@ -495,7 +495,7 @@
         banner.innerHTML = `<span class="live-dot"></span>Category: Single 3 (High-Winrate Safe Combo)`;
       } else {
         document.getElementById("menu-over15").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals (5 VIP Tickets • Safe Low Odds)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals (Safe Low Odds)`;
       }
 
       loadCategoryData(currentDateKey);
@@ -599,12 +599,12 @@
       const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
       const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
 
-      // High winrate, low-odds safe single pick markets only
+      // High winrate, safe low odds picks only
       const highWinratePicks = ["Double Chance (1X)", "Over 1.5 Goals", "Double Chance (X2)"];
       let seed = (homeName + awayName + dateKey).length;
       const pick = pickTypeOverride || highWinratePicks[seed % highWinratePicks.length];
 
-      // Strict low-odds range focusing on high probability & high winrate (1.20 - 1.45 max per leg)
+      // Strict low-odds range (1.20 - 1.45 max per leg) to avoid big odds
       let oddVal = (1.20 + ((seed * 2) % 18) / 100).toFixed(2);
 
       return {
@@ -631,7 +631,7 @@
     function generateSingle3ComboTicket(events, dateKey) {
       let games = [];
       let runningOdds = 1.0;
-      const count = Math.min(3, events.length); // Reduced to 3 legs max for higher winrate safety
+      const count = Math.min(3, events.length);
 
       const highWinrateComboMarkets = [
         "Over 1.5 Goals",
@@ -653,7 +653,7 @@
 
         let seed = (homeName + awayName + dateKey + i).length;
         const pick = highWinrateComboMarkets[seed % highWinrateComboMarkets.length];
-        let oddVal = (1.22 + ((seed * 3) % 15) / 100).toFixed(2);
+        let oddVal = (1.20 + ((seed * 3) % 15) / 100).toFixed(2);
 
         games.push({
           teams: `${homeName} vs ${awayName}`,
@@ -678,11 +678,11 @@
       const pool = events.map(ev => parseEvent(ev, dateKey, "Over 1.5 Goals"));
       let tickets = [];
 
-      for (let tNum = 1; tNum <= 5; tNum++) {
+      for (let tNum = 1; tNum <= 3; tNum++) {
         let legs = [];
         let runningOdds = 1.0;
         
-        for (let legIdx = 0; legIdx < 2; legIdx++) { // 2 legs per ticket for maximum safety & high winrate
+        for (let legIdx = 0; legIdx < 2; legIdx++) {
           let poolIndex = ((tNum - 1) * 2 + legIdx) % pool.length;
           let game = pool[poolIndex];
           legs.push(game);
@@ -700,27 +700,21 @@
     }
 
     function parseStandardTickets(events, dateKey) {
-      let parsedGames = events.slice(0, 4).map(ev => parseEvent(ev, dateKey));
+      let parsedGames = events.slice(0, 2).map(ev => parseEvent(ev, dateKey));
 
-      while (parsedGames.length < 4 && parsedGames.length > 0) {
+      while (parsedGames.length < 2 && parsedGames.length > 0) {
         parsedGames.push(parsedGames[0]);
       }
 
       return [
         {
-          name: "VIP Ticket #1",
+          name: "Safe VIP Ticket #1",
           totalOdds: (parseFloat(parsedGames[0].odd) * parseFloat(parsedGames[1].odd)).toFixed(2),
           games: [parsedGames[0], parsedGames[1]]
-        },
-        {
-          name: "VIP Ticket #2",
-          totalOdds: (parseFloat(parsedGames[2].odd) * parseFloat(parsedGames[3].odd)).toFixed(2),
-          games: [parsedGames[2], parsedGames[3]]
         }
       ];
     }
 
-    // Evaluation Engine for Single & Combo Markets
     function evaluateGame(pickType, homeScore, awayScore, matchState) {
       if (homeScore === '-' || awayScore === '-' || matchState !== 'post') return null;
       
@@ -733,10 +727,6 @@
         case "Home Win (1)": return h > a;
         case "Double Chance (1X)": return h >= a;
         case "Double Chance (X2)": return a >= h;
-        case "Double Chance (1X) & Over 1.5 Goals": return h >= a && (h + a) > 1;
-        case "Double Chance (X2) & Over 1.5 Goals": return a >= h && (h + a) > 1;
-        case "Both Teams to Score & Over 2.5": return h > 0 && a > 0 && (h + a) > 2;
-        case "Both Teams To Score (BTTS)": return h > 0 && a > 0;
         default: return true;
       }
     }
