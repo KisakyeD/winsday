@@ -40,7 +40,7 @@
       max-width: 800px;
     }
 
-    /* Top Header & Hamburger Menu */
+    /* Top Header & Navigation */
     header {
       width: 100%;
       display: flex;
@@ -53,19 +53,26 @@
     .header-left {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .brand-title {
-      font-size: 1.5rem;
+      font-size: 1.4rem;
       color: #ffffff;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       font-weight: bold;
     }
 
-    /* WhatsApp Header Button */
+    /* WhatsApp Button */
     .whatsapp-btn {
       background: #25d366;
       color: #fff;
@@ -90,6 +97,38 @@
       width: 16px;
       height: 16px;
       fill: #fff;
+    }
+
+    /* Refresh Button */
+    .refresh-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: var(--border-color);
+      color: var(--accent-green);
+    }
+
+    .refresh-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+      transition: transform 0.5s ease;
+    }
+
+    .refresh-btn.spinning svg {
+      transform: rotate(360deg);
     }
 
     .badge-ai {
@@ -380,7 +419,14 @@
           <span>Chat</span>
         </a>
       </div>
-      <button class="hamburger-btn" onclick="toggleMenu(true)">&#9776;</button>
+      <div class="header-right">
+        <!-- Live Refresh Button -->
+        <button class="refresh-btn" id="refresh-btn" onclick="handleManualRefresh()">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          <span>Refresh</span>
+        </button>
+        <button class="hamburger-btn" onclick="toggleMenu(true)">&#9776;</button>
+      </div>
     </header>
 
     <!-- Top Ad Banner -->
@@ -416,7 +462,7 @@
 
     // GLOBAL CLICK REDIRECT: Opens Adsterra on any click across the page
     document.addEventListener("click", function(e) {
-      if (e.target.closest('.menu-drawer') || e.target.closest('.date-slider') || e.target.closest('.whatsapp-btn') || e.target.tagName === 'A' || e.target.closest('button')) {
+      if (e.target.closest('.menu-drawer') || e.target.closest('.date-slider') || e.target.closest('.whatsapp-btn') || e.target.closest('.refresh-btn') || e.target.tagName === 'A' || e.target.closest('button')) {
         return;
       }
       window.open(adsterraUrl, '_blank');
@@ -426,6 +472,14 @@
       buildDateSlider();
       loadCategoryData(currentDateKey);
     });
+
+    function handleManualRefresh() {
+      const btn = document.getElementById("refresh-btn");
+      btn.classList.add("spinning");
+      loadCategoryData(currentDateKey).finally(() => {
+        setTimeout(() => btn.classList.remove("spinning"), 500);
+      });
+    }
 
     function toggleMenu(open) {
       const drawer = document.getElementById("menu-drawer");
