@@ -360,7 +360,7 @@
 
     <!-- Tickets Container -->
     <div class="tickets-wrapper" id="tickets-container">
-      <div class="loading-box">Connecting to live sports API...</div>
+      <div class="loading-box">Loading live data...</div>
     </div>
 
     <!-- Bottom Ad Banner -->
@@ -480,7 +480,7 @@
 
     async function loadCategoryData(dateKey) {
       const container = document.getElementById("tickets-container");
-      container.innerHTML = `<div class="loading-box">Fetching live data for ${dateKey}...</div>`;
+      container.innerHTML = `<div class="loading-box">Loading live data...</div>`;
 
       try {
         const formattedDateParam = dateKey.replace(/-/g, '');
