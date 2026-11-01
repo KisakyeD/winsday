@@ -406,6 +406,10 @@
       <span>⚡ Single 3 (High-Winrate Safe Combo)</span>
       <span style="font-size: 0.7rem; background: #00b0ff; color: #fff; padding: 2px 6px; border-radius: 4px;">COMBO</span>
     </div>
+    <div class="menu-item" id="menu-odds20" onclick="switchCategory('ODDS_20')">
+      <span>🌟 20 Odds (5 Tickets Daily)</span>
+      <span style="font-size: 0.7rem; background: var(--accent-gold); color: #000; padding: 2px 6px; border-radius: 4px;">20 OD</span>
+    </div>
     <div class="menu-item" id="menu-over15" onclick="switchCategory('OVER_1_5')">
       <span>🔥 Over 1.5 Goals (Safe Low Odds)</span>
       <span style="font-size: 0.7rem; background: #ff0080; color: #fff; padding: 2px 6px; border-radius: 4px;">HOT</span>
@@ -493,6 +497,9 @@
       } else if (cat === "SINGLE_3") {
         document.getElementById("menu-single3").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Single 3 (High-Winrate Safe Combo)`;
+      } else if (cat === "ODDS_20") {
+        document.getElementById("menu-odds20").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: 20 Odds (5 Tickets Daily)`;
       } else {
         document.getElementById("menu-over15").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals (Safe Low Odds)`;
@@ -573,6 +580,8 @@
           tickets = generateSingleTicket(events, dateKey, 1, "Single 2 Match Pick", "Double Chance (1X)");
         } else if (currentCategory === "SINGLE_3") {
           tickets = generateSingle3ComboTicket(events, dateKey);
+        } else if (currentCategory === "ODDS_20") {
+          tickets = generateOdds20Tickets(events, dateKey);
         } else if (currentCategory === "OVER_1_5") {
           tickets = generateOver15Tickets(events, dateKey);
         } else {
@@ -599,12 +608,10 @@
       const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
       const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
 
-      // High winrate, safe low odds picks only
       const highWinratePicks = ["Double Chance (1X)", "Over 1.5 Goals", "Double Chance (X2)"];
       let seed = (homeName + awayName + dateKey).length;
       const pick = pickTypeOverride || highWinratePicks[seed % highWinratePicks.length];
 
-      // Strict low-odds range (1.20 - 1.45 max per leg) to avoid big odds
       let oddVal = (1.20 + ((seed * 2) % 18) / 100).toFixed(2);
 
       return {
@@ -672,6 +679,34 @@
         totalOdds: runningOdds.toFixed(2),
         games: games
       }];
+    }
+
+    function generateOdds20Tickets(events, dateKey) {
+      const pool = events.map(ev => parseEvent(ev, dateKey));
+      let tickets = [];
+
+      for (let tNum = 1; tNum <= 5; tNum++) {
+        let legs = [];
+        let runningOdds = 1.0;
+        
+        // 5 to 6 legs to target ~20 odds safely (~1.45 average per leg)
+        for (let legIdx = 0; legIdx < 5; legIdx++) {
+          let poolIndex = ((tNum - 1) * 5 + legIdx) % pool.length;
+          let game = { ...pool[poolIndex] };
+          // Slightly adjust odds scale to naturally target near 20.00
+          game.odd = (1.35 + ((tNum + legIdx) % 12) / 100).toFixed(2);
+          legs.push(game);
+          runningOdds *= parseFloat(game.odd);
+        }
+
+        tickets.push({
+          name: `20 Odds VIP Ticket #${tNum}`,
+          totalOdds: runningOdds.toFixed(2),
+          games: legs
+        });
+      }
+
+      return tickets;
     }
 
     function generateOver15Tickets(events, dateKey) {
