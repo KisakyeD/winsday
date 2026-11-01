@@ -414,6 +414,10 @@
       <span>💎 Mega Odds 100+ (5 Tickets)</span>
       <span style="font-size: 0.7rem; background: var(--accent-gold); color: #000; padding: 2px 6px; border-radius: 4px;">JACKPOT</span>
     </div>
+    <div class="menu-item" id="menu-odd400" onclick="switchCategory('ODD_400')">
+      <span>🚀 Mega Odds 400+ (5 Tickets)</span>
+      <span style="font-size: 0.7rem; background: #ff5252; color: #fff; padding: 2px 6px; border-radius: 4px;">ULTRA</span>
+    </div>
   </div>
 
   <div class="container">
@@ -503,6 +507,9 @@
       } else if (cat === "ODD_100") {
         document.getElementById("menu-odd100").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Mega Odds 100+ (5 VIP Tickets)`;
+      } else if (cat === "ODD_400") {
+        document.getElementById("menu-odd400").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Mega Odds 400+ (5 VIP Tickets)`;
       }
 
       loadCategoryData(currentDateKey);
@@ -584,6 +591,8 @@
           tickets = generateOver15Tickets(events, dateKey);
         } else if (currentCategory === "ODD_100") {
           tickets = generateOdd100Tickets(events, dateKey);
+        } else if (currentCategory === "ODD_400") {
+          tickets = generateOdd400Tickets(events, dateKey);
         } else {
           tickets = parseStandardTickets(events, dateKey);
         }
@@ -608,7 +617,6 @@
       const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
       const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
 
-      // Use all leagues available in the global feed instead of filtering
       let leagueName = "INTERNATIONAL";
       if (ev.season && ev.season.slug) {
         leagueName = ev.season.slug.toUpperCase().replace(/-/g, ' ');
@@ -752,6 +760,42 @@
 
         tickets.push({
           name: `Mega Odds 100+ Ticket #${tNum}`,
+          totalOdds: runningOdds.toFixed(2),
+          games: legs
+        });
+      }
+
+      return tickets;
+    }
+
+    function generateOdd400Tickets(events, dateKey) {
+      let allGames = [];
+      for (let i = 0; i < events.length; i++) {
+        let baseGame = parseEvent(events[i], dateKey + i);
+        baseGame.odd = (2.30 + (i % 7) * 0.12).toFixed(2);
+        allGames.push(baseGame);
+      }
+
+      while (allGames.length < 45 && allGames.length > 0) {
+        allGames.push(allGames[allGames.length % allGames.length]);
+      }
+
+      let tickets = [];
+      const legCount = 8; // 8 legs at ~2.3 odds = ~400+ odds
+
+      for (let tNum = 1; tNum <= 5; tNum++) {
+        let legs = [];
+        let runningOdds = 1.0;
+
+        for (let l = 0; l < legCount; l++) {
+          let gameIdx = ((tNum - 1) * legCount + l) % allGames.length;
+          let game = allGames[gameIdx];
+          legs.push(game);
+          runningOdds *= parseFloat(game.odd);
+        }
+
+        tickets.push({
+          name: `Mega Odds 400+ Ticket #${tNum}`,
           totalOdds: runningOdds.toFixed(2),
           games: legs
         });
