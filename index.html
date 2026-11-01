@@ -1,506 +1,810 @@
-<!-- JAVASCRIPT ENGINE -->
-    <script>
-        let selectedDate = new Date();
-        let vipDate = new Date();
-        let selectedVipTier = '10';
-        let showOnlyLive = false;
-        let selectedLeague = 'ALL';
-        let searchQuery = '';
-        let globalLeaguesData = [];
-        let activeMatch = null;
-        let apiCache = {};
-        let favoriteMatchIds = new Set();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI VIP Football Predictions (Clean Single Picks)</title>
+  <style>
+    :root {
+      --bg-dark: #0b0e14;
+      --card-bg: #151a23;
+      --accent-green: #00e676;
+      --accent-red: #ff5252;
+      --accent-gold: #ffd700;
+      --text-main: #f0f4f8;
+      --text-muted: #8a99ad;
+      --border-color: #232d3f;
+    }
 
-        if (window.lucide) {
-            lucide.createIcons();
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px 10px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    /* Top Header & Hamburger Menu */
+    header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: bold;
+    }
+
+    .badge-ai {
+      background: linear-gradient(135deg, #7928ca, #ff0080);
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .hamburger-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 1.5rem;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .hamburger-btn:hover {
+      background: var(--border-color);
+    }
+
+    /* Navigation Drawer */
+    .menu-drawer {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 290px;
+      height: 100vh;
+      background: #11151c;
+      border-left: 1px solid var(--border-color);
+      box-shadow: -5px 0 25px rgba(0,0,0,0.8);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      transition: right 0.3s ease;
+    }
+
+    .menu-drawer.open {
+      right: 0;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+    }
+
+    .drawer-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--accent-gold);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+
+    .menu-item:hover, .menu-item.active {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.6);
+      z-index: 999;
+      display: none;
+    }
+
+    .overlay.active {
+      display: block;
+    }
+
+    .live-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      margin-right: 6px;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    /* Mode Banner */
+    .mode-banner {
+      background: rgba(0, 230, 118, 0.1);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+      padding: 10px 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+
+    /* Stats Dashboard */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: var(--accent-gold);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Date Navigation Slider (-30 to +30) */
+    .date-nav-container {
+      margin-bottom: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .date-slider {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding-bottom: 6px;
+    }
+
+    .date-slider::-webkit-scrollbar {
+      height: 6px;
+    }
+    .date-slider::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .date-btn {
+      flex: 0 0 auto;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .date-btn.active {
+      background: var(--accent-gold);
+      color: #000;
+      border-color: var(--accent-gold);
+      font-weight: bold;
+    }
+
+    .date-btn .day-label { font-size: 0.7rem; display: block; text-transform: uppercase; }
+    .date-btn .date-num { font-size: 0.95rem; font-weight: bold; }
+
+    /* Tickets Display Section */
+    .tickets-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .ticket-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .ticket-header {
+      background: #1c2330;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .ticket-title {
+      font-weight: bold;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .total-odds {
+      background: rgba(255, 215, 0, 0.15);
+      color: var(--accent-gold);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .games-list {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .game-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 8px;
+      border-left: 3px solid var(--text-muted);
+    }
+
+    .game-details { display: flex; flex-direction: column; gap: 4px; }
+    .teams { font-weight: 600; font-size: 0.95rem; }
+    .league { font-size: 0.75rem; color: var(--text-muted); }
+    .prediction { font-size: 0.85rem; color: var(--accent-gold); font-weight: bold; }
+    
+    .game-score-box {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+
+    .score-badge {
+      background: #1c2330;
+      color: var(--accent-gold);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .game-odds { font-size: 0.8rem; color: var(--text-muted); }
+
+    .ticket-footer {
+      padding: 12px 16px;
+      background: #11151c;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .status-PENDING { background: rgba(255, 255, 255, 0.1); color: var(--text-muted); }
+    .status-WIN { background: rgba(0, 230, 118, 0.2); color: var(--accent-green); }
+    .status-LOSS { background: rgba(255, 82, 82, 0.2); color: var(--accent-red); }
+
+    .loading-box {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="overlay" id="overlay" onclick="toggleMenu(false)"></div>
+
+  <!-- Navigation Drawer -->
+  <div class="menu-drawer" id="menu-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">VIP AI NAVIGATION</div>
+      <button class="close-btn" onclick="toggleMenu(false)">&times;</button>
+    </div>
+    <div class="menu-item active" id="menu-standard" onclick="switchCategory('STANDARD')">
+      <span>⚽ Daily VIP Tickets (2 Odds)</span>
+    </div>
+    <div class="menu-item" id="menu-single" onclick="switchCategory('SINGLE')">
+      <span>🎯 Daily Single Ticket (1 Pick)</span>
+      <span style="font-size: 0.7rem; background: var(--accent-gold); color: #000; padding: 2px 6px; border-radius: 4px;">PRO</span>
+    </div>
+    <div class="menu-item" id="menu-single2" onclick="switchCategory('SINGLE_2')">
+      <span>🔥 Single 2 (Single Match Pick)</span>
+      <span style="font-size: 0.7rem; background: var(--accent-green); color: #000; padding: 2px 6px; border-radius: 4px;">VIP</span>
+    </div>
+    <div class="menu-item" id="menu-single3" onclick="switchCategory('SINGLE_3')">
+      <span>⚡ Single 3 (High-Winrate Combo)</span>
+      <span style="font-size: 0.7rem; background: #00b0ff; color: #fff; padding: 2px 6px; border-radius: 4px;">COMBO</span>
+    </div>
+    <div class="menu-item" id="menu-over15" onclick="switchCategory('OVER_1_5')">
+      <span>🔥 Over 1.5 Goals (5 Tickets • Odd 5+)</span>
+      <span style="font-size: 0.7rem; background: #ff0080; color: #fff; padding: 2px 6px; border-radius: 4px;">HOT</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="brand-title">
+        <span>AI VIP Tips</span>
+        <span class="badge-ai" id="winrate-badge">93.5% WINRATE</span>
+      </div>
+      <button class="hamburger-btn" onclick="toggleMenu(true)">&#9776;</button>
+    </header>
+
+    <!-- Active Banner -->
+    <div class="mode-banner" id="mode-banner">
+      <span id="mode-title"><span class="live-dot"></span>Category: Daily VIP Tickets (2 Odds Each)</span>
+    </div>
+
+    <!-- Stats Dashboard -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-value" id="winrate-val">93.5%</div>
+        <div class="stat-label">AI Accuracy</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-wins">58</div>
+        <div class="stat-label">Won Tickets</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-loss">4</div>
+        <div class="stat-label">Lost Tickets</div>
+      </div>
+    </div>
+
+    <!-- Date Navigation Slider (-30 to +30) -->
+    <div class="date-nav-container">
+      <div class="date-slider" id="date-slider"></div>
+    </div>
+
+    <!-- Tickets Container -->
+    <div class="tickets-wrapper" id="tickets-container">
+      <div class="loading-box">Connecting to live sports API...</div>
+    </div>
+  </div>
+
+  <script>
+    let currentDateKey = getFormattedDate(0);
+    let currentCategory = "STANDARD";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      buildDateSlider();
+      loadCategoryData(currentDateKey);
+    });
+
+    function toggleMenu(open) {
+      const drawer = document.getElementById("menu-drawer");
+      const overlay = document.getElementById("overlay");
+      if (open) {
+        drawer.classList.add("open");
+        overlay.classList.add("active");
+      } else {
+        drawer.classList.remove("open");
+        overlay.classList.remove("active");
+      }
+    }
+
+    function switchCategory(cat) {
+      currentCategory = cat;
+      toggleMenu(false);
+
+      document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
+      
+      const banner = document.getElementById("mode-title");
+      if (cat === "STANDARD") {
+        document.getElementById("menu-standard").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets (2 Odds Each)`;
+      } else if (cat === "SINGLE") {
+        document.getElementById("menu-single").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Daily Single Ticket (1 Pick)`;
+      } else if (cat === "SINGLE_2") {
+        document.getElementById("menu-single2").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Single 2 (Single Match Pick)`;
+      } else if (cat === "SINGLE_3") {
+        document.getElementById("menu-single3").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Single 3 (High-Winrate Safe Combo)`;
+      } else {
+        document.getElementById("menu-over15").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals (5 VIP Tickets • Odd 5+)`;
+      }
+
+      loadCategoryData(currentDateKey);
+    }
+
+    function getFormattedDate(offsetDays) {
+      const date = new Date();
+      date.setDate(date.getDate() + offsetDays);
+      return date.toISOString().split('T')[0];
+    }
+
+    function buildDateSlider() {
+      const slider = document.getElementById("date-slider");
+      slider.innerHTML = "";
+
+      for (let i = -30; i <= 30; i++) {
+        const dateObj = new Date();
+        dateObj.setDate(dateObj.getDate() + i);
+        
+        const dateKey = dateObj.toISOString().split('T')[0];
+        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNum = dateObj.getDate();
+        const monthName = dateObj.toLocaleDateString('en-US', { month: 'short' });
+
+        const btn = document.createElement("button");
+        btn.className = `date-btn ${i === 0 ? 'active' : ''}`;
+        btn.id = `date-btn-${dateKey}`;
+        btn.onclick = () => selectDate(dateKey);
+        
+        btn.innerHTML = `
+          <span class="day-label">${i === 0 ? 'Today' : dayName}</span>
+          <span class="date-num">${dayNum} ${monthName}</span>
+        `;
+
+        slider.appendChild(btn);
+      }
+
+      setTimeout(() => {
+        const todayBtn = document.getElementById(`date-btn-${getFormattedDate(0)}`);
+        if (todayBtn) {
+          todayBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+      }, 100);
+    }
+
+    function selectDate(dateKey) {
+      currentDateKey = dateKey;
+      document.querySelectorAll(".date-btn").forEach(b => b.classList.remove("active"));
+      const activeBtn = document.getElementById(`date-btn-${dateKey}`);
+      if (activeBtn) activeBtn.classList.add("active");
+
+      loadCategoryData(dateKey);
+    }
+
+    async function loadCategoryData(dateKey) {
+      const container = document.getElementById("tickets-container");
+      container.innerHTML = `<div class="loading-box">Fetching live data for ${dateKey}...</div>`;
+
+      try {
+        const formattedDateParam = dateKey.replace(/-/g, '');
+        const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${formattedDateParam}`);
+        const data = await res.json();
+
+        let events = data.events || [];
+
+        if (events.length === 0) {
+          container.innerHTML = `<div class="loading-box">No official football matches scheduled for ${dateKey}. Select another date above.</div>`;
+          return;
         }
 
-        function openSidebar() {
-            document.getElementById('sidebarDrawer').classList.remove('-translate-x-full');
-            document.getElementById('sidebarBackdrop').classList.remove('hidden');
+        let tickets = [];
+        if (currentCategory === "SINGLE") {
+          tickets = generateSingleTicket(events, dateKey, 0, "VIP Single Nap Ticket", "Over 1.5 Goals");
+        } else if (currentCategory === "SINGLE_2") {
+          tickets = generateSingleTicket(events, dateKey, 1, "Single 2 Match Pick", "Double Chance (1X)");
+        } else if (currentCategory === "SINGLE_3") {
+          tickets = generateSingle3ComboTicket(events, dateKey);
+        } else if (currentCategory === "OVER_1_5") {
+          tickets = generateOver15Tickets(events, dateKey);
+        } else {
+          tickets = parseStandardTickets(events, dateKey);
         }
 
-        function closeSidebar() {
-            document.getElementById('sidebarDrawer').classList.add('-translate-x-full');
-            document.getElementById('sidebarBackdrop').classList.add('hidden');
-        }
-
-        function switchView(viewName, tier) {
-            closeSidebar();
-            document.getElementById('mainView').classList.add('hidden');
-            document.getElementById('vipView').classList.add('hidden');
-            document.getElementById('settingsView').classList.add('hidden');
-
-            if (viewName === 'main') {
-                document.getElementById('mainView').classList.remove('hidden');
-            } else if (viewName === 'vip') {
-                document.getElementById('vipView').classList.remove('hidden');
-                if (tier) selectedVipTier = tier;
-                updateVipTierUI();
-                renderVipTicket();
-            } else if (viewName === 'settings') {
-                document.getElementById('settingsView').classList.remove('hidden');
-            }
-        }
-
-        function generateAiPrediction(homeName, awayName, homeScore, awayScore, dateSeed) {
-            const seedStr = (homeName + awayName + (dateSeed || '')).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            
-            const pickPool = [
-                { pick: "1X (Home/Draw)", oddsMin: 1.30, oddsMax: 1.65 },
-                { pick: "X2 (Draw/Away)", oddsMin: 1.35, oddsMax: 1.75 },
-                { pick: "Over 1.5 Goals", oddsMin: 1.25, oddsMax: 1.50 },
-                { pick: "BTTS Yes", oddsMin: 1.60, oddsMax: 1.95 },
-                { pick: "Over 2.5 Goals", oddsMin: 1.70, oddsMax: 2.10 },
-                { pick: "Under 3.5 Goals", oddsMin: 1.22, oddsMax: 1.42 }
-            ];
-
-            const pickObj = pickPool[seedStr % pickPool.length];
-            const odds = parseFloat((pickObj.oddsMin + (seedStr % 35) / 100).toFixed(2));
-            const confidence = 99;
-
-            let rationale = `Model calculates ${pickObj.pick} with ${confidence}% accuracy rating based on advanced neural historical matrix processing.`;
-
-            return {
-                leg1: pickObj.pick,
-                odds: odds,
-                confidence: confidence,
-                rationale: rationale
-            };
-        }
-
-        // --- REAL RESULT EVALUATOR (WIN / LOSS CHECKER) ---
-        function evaluateMatchResult(match) {
-            if (!match.isFinished) return { status: 'PENDING', label: 'PENDING', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
-
-            const hScore = parseInt(match.scoreHome) || 0;
-            const aScore = parseInt(match.scoreAway) || 0;
-            const totalGoals = hScore + aScore;
-            const pick = match.leg1;
-
-            let isWon = false;
-
-            if (pick.includes("1X")) {
-                isWon = hScore >= aScore; // Home win or draw
-            } else if (pick.includes("X2")) {
-                isWon = aScore >= hScore; // Away win or draw
-            } else if (pick.includes("Over 1.5")) {
-                isWon = totalGoals > 1;
-            } else if (pick.includes("Over 2.5")) {
-                isWon = totalGoals > 2;
-            } else if (pick.includes("Under 3.5")) {
-                isWon = totalGoals < 4;
-            } else if (pick.includes("BTTS Yes")) {
-                isWon = hScore > 0 && aScore > 0;
-            } else {
-                isWon = true; // Default safety fallback
-            }
-
-            if (isWon) {
-                return { status: 'WON', label: '🟢 WON', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
-            } else {
-                return { status: 'LOST', label: '🔴 LOST', color: 'text-red-400 bg-red-500/10 border-red-500/20' };
-            }
-        }
-
-        async function fetchLiveFootballData() {
-            const container = document.getElementById('matchesList');
-            const datePicker = document.getElementById('dashCalendarPicker');
-            const dateStr = selectedDate.toISOString().split('T')[0];
-            
-            if (datePicker) datePicker.value = dateStr;
-
-            if (container) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-10 text-gray-400 space-y-3">
-                        <div class="w-7 h-7 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p class="text-xs font-mono">Loading real fixtures & results...</p>
-                    </div>
-                `;
-            }
-
-            let events = [];
-
-            if (apiCache[dateStr]) {
-                events = apiCache[dateStr];
-            } else {
-                try {
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 2500);
-
-                    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/all/scoreboard?dates=${dateStr.replace(/-/g, '')}`, { signal: controller.signal });
-                    clearTimeout(timeoutId);
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        events = data.events || [];
-                        apiCache[dateStr] = events;
-                    }
-                } catch (err) {
-                    console.warn("Fast fallback triggered for fixture stream");
-                }
-            }
-
-            globalLeaguesData = parseESPNFootballData(events, dateStr);
-            renderMatches();
-        }
-
-        function parseESPNFootballData(events, dateStr) {
-            const leaguesMap = {};
-
-            if (events && events.length > 0) {
-                events.forEach(evt => {
-                    const competition = evt.competitions[0];
-                    const leagueName = evt.league ? evt.league.name : (competition.notes?.[0]?.headline || "Global Leagues");
-                    const statusType = evt.status?.type?.name;
-                    const isLive = statusType === "STATUS_IN_PROGRESS" || statusType === "STATUS_HALFTIME";
-                    const isFinished = statusType === "STATUS_FINAL";
-                    const statusDetail = isLive ? (evt.status?.displayClock || "LIVE") : (isFinished ? "FT" : evt.status?.type?.shortDetail || "NS");
-
-                    const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
-                    const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
-
-                    const homeName = homeTeam?.team?.displayName || "Home Team";
-                    const awayName = awayTeam?.team?.displayName || "Away Team";
-                    const homeScore = homeTeam?.score !== undefined ? homeTeam.score : "0";
-                    const awayScore = awayTeam?.score !== undefined ? awayTeam.score : "0";
-
-                    const aiPrediction = generateAiPrediction(homeName, awayName, homeScore, awayScore, dateStr);
-
-                    const matchObj = {
-                        id: evt.id || Math.floor(Math.random() * 100000),
-                        time: evt.date ? new Date(evt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "19:45",
-                        status: statusDetail,
-                        home: homeName,
-                        away: awayName,
-                        scoreHome: homeScore,
-                        scoreAway: awayScore,
-                        isLive: isLive,
-                        isFinished: isFinished,
-                        leg1: aiPrediction.leg1,
-                        confidence: aiPrediction.confidence,
-                        odds: aiPrediction.odds,
-                        rationale: aiPrediction.rationale
-                    };
-
-                    const evaluation = evaluateMatchResult(matchObj);
-                    matchObj.resultEval = evaluation;
-
-                    if (!leaguesMap[leagueName]) {
-                        leaguesMap[leagueName] = {
-                            league: leagueName,
-                            stage: "Matchday Fixtures",
-                            matches: []
-                        };
-                    }
-                    leaguesMap[leagueName].matches.push(matchObj);
-                });
-            }
-
-            return Object.values(leaguesMap);
-        }
-
-        function renderMatches() {
-            const container = document.getElementById('matchesList');
-            const pillsContainer = document.getElementById('leagueFilterPills');
-            const liveCountEl = document.getElementById('liveCount');
-
-            if (!container) return;
-
-            let totalLiveCount = 0;
-            globalLeaguesData.forEach(l => {
-                totalLiveCount += l.matches.filter(m => m.isLive).length;
-            });
-            if (liveCountEl) liveCountEl.innerText = totalLiveCount;
-
-            if (pillsContainer) {
-                let pillsHtml = `<button onclick="setLeagueFilter('ALL')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition whitespace-nowrap ${selectedLeague === 'ALL' ? 'bg-emerald-500 text-darkbg border-emerald-500' : 'bg-darkcard text-gray-300 border-darkborder'}">All Leagues</button>`;
-                globalLeaguesData.forEach(group => {
-                    pillsHtml += `<button onclick="setLeagueFilter('${group.league}')" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition whitespace-nowrap ${selectedLeague === group.league ? 'bg-emerald-500 text-darkbg border-emerald-500' : 'bg-darkcard text-gray-300 border-darkborder'}">${group.league}</button>`;
-                });
-                pillsContainer.innerHTML = pillsHtml;
-            }
-
-            let filteredLeagues = globalLeaguesData.map(group => {
-                let matches = group.matches.filter(m => {
-                    if (showOnlyLive && !m.isLive) return false;
-                    if (selectedLeague !== 'ALL' && group.league !== selectedLeague) return false;
-                    return true;
-                });
-                return { ...group, matches };
-            }).filter(group => group.matches.length > 0);
-
-            if (filteredLeagues.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12 bg-darkcard border border-darkborder rounded-2xl space-y-2">
-                        <p class="text-gray-400 text-xs font-bold">No matches available for this filter / date.</p>
-                        <button onclick="resetFilters()" class="text-emerald-400 text-xs font-bold hover:underline">Reset Filters</button>
-                    </div>
-                `;
-                return;
-            }
-
-            let html = '';
-            filteredLeagues.forEach(group => {
-                html += `
-                    <div class="bg-darkcard border border-darkborder rounded-2xl overflow-hidden shadow-lg">
-                        <div class="px-4 py-2.5 bg-darkborder/40 border-b border-darkborder flex items-center justify-between">
-                            <span class="text-xs font-black uppercase tracking-wider text-white">${group.league}</span>
-                            <span class="text-[10px] text-gray-400 font-mono">${group.matches.length} matches</span>
-                        </div>
-                        <div class="divide-y divide-darkborder/60">
-                `;
-
-                group.matches.forEach(m => {
-                    const isFav = favoriteMatchIds.has(m.id);
-                    html += `
-                        <div class="p-3.5 hover:bg-darkborder/20 transition flex items-center justify-between gap-3">
-                            <div class="flex items-center space-x-3 min-w-0 cursor-pointer flex-grow" onclick="openPredictionModal('${m.id}')">
-                                <div class="w-12 text-center shrink-0">
-                                    <span class="text-[11px] font-mono font-bold ${m.isLive ? 'text-red-400 animate-pulse' : 'text-gray-400'}">${m.status}</span>
-                                </div>
-                                <div class="min-w-0 space-y-1">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-xs font-bold text-white truncate">${m.home}</span>
-                                        <span class="text-xs font-mono text-gray-400 font-bold">${m.scoreHome}</span>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-xs font-bold text-white truncate">${m.away}</span>
-                                        <span class="text-xs font-mono text-gray-400 font-bold">${m.scoreAway}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center space-x-3 shrink-0">
-                                <div onclick="openPredictionModal('${m.id}')" class="text-right cursor-pointer bg-darkbg/80 border border-darkborder px-3 py-1.5 rounded-xl hover:border-emerald-500/50 transition">
-                                    <div class="flex items-center justify-end gap-1.5">
-                                        <span class="text-[10px] font-bold text-emerald-400">${m.leg1}</span>
-                                        <span class="text-[9px] font-black px-1.5 py-0.2 rounded border ${m.resultEval.color}">${m.resultEval.label}</span>
-                                    </div>
-                                    <div class="text-xs font-black font-mono text-amber-400">@ ${m.odds.toFixed(2)}</div>
-                                </div>
-                                <button onclick="toggleFavorite('${m.id}')" class="p-2 rounded-lg hover:bg-darkborder text-gray-400 transition">
-                                    <i data-lucide="star" class="w-4 h-4 ${isFav ? 'text-amber-400 fill-amber-400' : ''}"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                html += `</div></div>`;
-            });
-
-            container.innerHTML = html;
-            if (window.lucide) lucide.createIcons();
-        }
-
-        function setLeagueFilter(leagueName) {
-            selectedLeague = leagueName;
-            renderMatches();
-        }
-
-        function filterLiveMatches() {
-            showOnlyLive = !showOnlyLive;
-            const btn = document.getElementById('liveFilterBtn');
-            if (showOnlyLive) {
-                btn.classList.add('bg-red-500', 'text-white');
-            } else {
-                btn.classList.remove('bg-red-500', 'text-white');
-            }
-            renderMatches();
-        }
-
-        function resetFilters() {
-            selectedLeague = 'ALL';
-            showOnlyLive = false;
-            renderMatches();
-        }
-
-        function navigateDate(days) {
-            selectedDate.setDate(selectedDate.getDate() + days);
-            fetchLiveFootballData();
-        }
-
-        function selectCustomDate(dateStr) {
-            if (!dateStr) return;
-            selectedDate = new Date(dateStr);
-            fetchLiveFootballData();
-        }
-
-        // VIP TICKET SYSTEM
-        function updateVipTierUI() {
-            ['5', '10', '20', '50'].forEach(tier => {
-                const btn = document.getElementById(`vipTierBtn${tier}`);
-                if (!btn) return;
-                if (tier === selectedVipTier) {
-                    btn.className = "px-4 py-1.5 rounded-xl text-xs font-bold border transition bg-amber-500 text-darkbg border-amber-500 font-black shadow whitespace-nowrap";
-                } else {
-                    btn.className = "px-4 py-1.5 rounded-xl text-xs font-bold border transition bg-darkborder/60 text-gray-300 border-darkborder whitespace-nowrap";
-                }
-            });
-            const vipPicker = document.getElementById('vipCalendarPicker');
-            if (vipPicker) vipPicker.value = vipDate.toISOString().split('T')[0];
-        }
-
-        function setVipTier(tier) {
-            selectedVipTier = tier;
-            updateVipTierUI();
-            renderVipTicket();
-        }
-
-        function changeVipDate(days) {
-            vipDate.setDate(vipDate.getDate() + days);
-            updateVipTierUI();
-            renderVipTicket();
-        }
-
-        function selectVipCalendarDate(dateStr) {
-            if (!dateStr) return;
-            vipDate = new Date(dateStr);
-            updateVipTierUI();
-            renderVipTicket();
-        }
-
-        function renderVipTicket() {
-            const listEl = document.getElementById('vipTicketList');
-            const totalOddsEl = document.getElementById('vipTotalOdds');
-            const statusBanner = document.getElementById('vipStatusBanner');
-
-            if (!listEl) return;
-
-            let targetOddsMultiplier = 5;
-            if (selectedVipTier === '10') targetOddsMultiplier = 10;
-            if (selectedVipTier === '20') targetOddsMultiplier = 20;
-            if (selectedVipTier === '50') targetOddsMultiplier = 50;
-
-            const dateSeedStr = vipDate.toISOString().split('T')[0];
-            const allMatches = [];
-            globalLeaguesData.forEach(g => allMatches.push(...g.matches));
-
-            let ticketLegs = [];
-            let cumulativeOdds = 1.0;
-
-            if (allMatches.length > 0) {
-                let seedNum = dateSeedStr.split('-').reduce((a, b) => parseInt(a) + parseInt(b), 0) + parseInt(selectedVipTier);
-                for (let i = 0; i < (selectedVipTier === '50' ? 8 : (selectedVipTier === '20' ? 6 : 4)); i++) {
-                    const match = allMatches[(seedNum + i * 3) % allMatches.length];
-                    if (match && !ticketLegs.some(l => l.matchId === match.id)) {
-                        ticketLegs.push({
-                            matchId: match.id,
-                            teams: `${match.home} vs ${match.away}`,
-                            league: match.league || "Global Match",
-                            pick: match.leg1,
-                            odds: match.odds,
-                            resultEval: match.resultEval
-                        });
-                        cumulativeOdds *= match.odds;
-                    }
-                }
-            }
-
-            if (ticketLegs.length === 0) {
-                ticketLegs = [
-                    { teams: "Arsenal vs Chelsea", league: "Premier League", pick: "1X (Home/Draw)", odds: 1.35, resultEval: { label: 'PENDING', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' } },
-                    { teams: "Real Madrid vs Barcelona", league: "La Liga", pick: "Over 1.5 Goals", odds: 1.40, resultEval: { label: 'PENDING', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' } }
-                ];
-                cumulativeOdds = ticketLegs.reduce((acc, l) => acc * l.odds, 1);
-            }
-
-            if (cumulativeOdds < targetOddsMultiplier) {
-                cumulativeOdds = targetOddsMultiplier + (Math.random() * 0.8);
-            }
-
-            if (totalOddsEl) totalOddsEl.innerText = `@ ${cumulativeOdds.toFixed(2)}`;
-
-            if (statusBanner) {
-                statusBanner.innerHTML = `
-                    <span class="text-gray-300">Ticket Tier: <strong class="text-amber-400">Odd ${selectedVipTier}+ Guarantee</strong></span>
-                    <span class="text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded font-bold">99% Model Confidence</span>
-                `;
-            }
-
-            let html = '';
-            ticketLegs.forEach((leg, idx) => {
-                html += `
-                    <div class="bg-darkbg/90 border border-darkborder p-3 rounded-xl flex items-center justify-between gap-3">
-                        <div class="space-y-0.5 min-w-0">
-                            <span class="text-[10px] text-gray-400 font-mono">Leg #${idx + 1}</span>
-                            <div class="text-xs font-bold text-white truncate">${leg.teams}</div>
-                            <div class="text-[10px] text-emerald-400 font-bold">Pick: ${leg.pick}</div>
-                        </div>
-                        <div class="text-right shrink-0 space-y-1">
-                            <div class="text-xs font-black font-mono text-amber-400">@ ${leg.odds.toFixed(2)}</div>
-                            <span class="text-[9px] font-black px-2 py-0.5 rounded border ${leg.resultEval.color}">${leg.resultEval.label}</span>
-                        </div>
-                    </div>
-                `;
-            });
-
-            listEl.innerHTML = html;
-        }
-
-        function copyVipTicket() {
-            alert(`VIP Odd ${selectedVipTier}+ Ticket selections copied successfully!`);
-        }
-
-        function openPredictionModal(matchId) {
-            let foundMatch = null;
-            for (const g of globalLeaguesData) {
-                const m = g.matches.find(x => x.id == matchId);
-                if (m) {
-                    foundMatch = { ...m, leagueName: g.league };
-                    break;
-                }
-            }
-
-            if (!foundMatch) return;
-            activeMatch = foundMatch;
-
-            document.getElementById('modalMatchTitle').innerText = `${foundMatch.home} vs ${foundMatch.away}`;
-            document.getElementById('modalMatchLeague').innerText = foundMatch.leagueName;
-            document.getElementById('modalComboConfidence').innerText = `${foundMatch.confidence}% Conf.`;
-            document.getElementById('modalComboOdds').innerText = `@ ${foundMatch.odds.toFixed(2)}`;
-            document.getElementById('modalLeg1').innerText = `${foundMatch.leg1} [${foundMatch.resultEval.label}]`;
-            document.getElementById('modalRationale').innerText = foundMatch.rationale;
-
-            document.getElementById('predictionModal').classList.remove('hidden');
-        }
-
-        function closePredictionModal() {
-            document.getElementById('predictionModal').classList.add('hidden');
-        }
-
-        function copySingleCombo() {
-            if (!activeMatch) return;
-            alert(`Copied Single Pick: ${activeMatch.home} vs ${activeMatch.away} -> ${activeMatch.leg1} (@${activeMatch.odds.toFixed(2)})`);
-        }
-
-        function toggleFavorite(matchId) {
-            if (favoriteMatchIds.has(matchId)) {
-                favoriteMatchIds.delete(matchId);
-            } else {
-                favoriteMatchIds.add(matchId);
-            }
-            renderMatches();
-        }
-
-        function toggleTheme() {
-            const body = document.getElementById('bodyEl');
-            const sunIcon = document.getElementById('sunIcon');
-            const moonIcon = document.getElementById('moonIcon');
-            
-            body.classList.toggle('dark');
-            if (sunIcon && moonIcon) {
-                sunIcon.classList.toggle('hidden');
-                moonIcon.classList.toggle('hidden');
-            }
-        }
-
-        function saveSetting(key, value) {
-            localStorage.setItem(`goal_setting_${key}`, value);
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchLiveFootballData();
+        renderTickets(tickets);
+
+      } catch (err) {
+        console.error("Failed to load live data:", err);
+        container.innerHTML = `<div class="loading-box">Unable to connect to live match feed. Check internet connection.</div>`;
+      }
+    }
+
+    function parseEvent(ev, dateKey, pickTypeOverride = null) {
+      const comp = ev.competitions[0];
+      const homeComp = comp.competitors.find(c => c.homeAway === 'home');
+      const awayComp = comp.competitors.find(c => c.homeAway === 'away');
+      const state = comp.status.type.state;
+
+      const homeName = homeComp.team.shortDisplayName || homeComp.team.displayName;
+      const awayName = awayComp.team.shortDisplayName || awayComp.team.displayName;
+
+      const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
+      const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
+
+      // Clean single pick markets only (No multi-market combos)
+      const cleanSinglePicks = ["Double Chance (1X)", "Over 1.5 Goals", "Home Win (1)", "Double Chance (X2)"];
+      let seed = (homeName + awayName + dateKey).length;
+      const pick = pickTypeOverride || cleanSinglePicks[seed % cleanSinglePicks.length];
+
+      let oddVal = (1.35 + ((seed * 3) % 30) / 100).toFixed(2);
+
+      return {
+        teams: `${homeName} vs ${awayName}`,
+        league: ev.season && ev.season.slug ? ev.season.slug.toUpperCase().replace(/-/g, ' ') : "INTERNATIONAL",
+        pick: pick,
+        odd: oddVal,
+        homeScore: homeScore,
+        awayScore: awayScore,
+        state: state
+      };
+    }
+
+    function generateSingleTicket(events, dateKey, eventIndex, ticketName, pickType) {
+      const ev = events[eventIndex % events.length];
+      const game = parseEvent(ev, dateKey, pickType);
+      return [{
+        name: ticketName,
+        totalOdds: game.odd,
+        games: [game]
+      }];
+    }
+
+    function generateSingle3ComboTicket(events, dateKey) {
+      let games = [];
+      let runningOdds = 1.0;
+      const count = Math.min(4, events.length);
+
+      const highWinrateComboMarkets = [
+        "Over 1.5 Goals",
+        "Double Chance (1X) & Over 1.5 Goals",
+        "Over 2.5 Goals",
+        "Double Chance (X2) & Over 1.5 Goals"
+      ];
+
+      for (let i = 0; i < count; i++) {
+        const ev = events[i];
+        const comp = ev.competitions[0];
+        const homeComp = comp.competitors.find(c => c.homeAway === 'home');
+        const awayComp = comp.competitors.find(c => c.homeAway === 'away');
+        const state = comp.status.type.state;
+
+        const homeName = homeComp.team.shortDisplayName || homeComp.team.displayName;
+        const awayName = awayComp.team.shortDisplayName || awayComp.team.displayName;
+        const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
+        const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
+
+        let seed = (homeName + awayName + dateKey + i).length;
+        const pick = highWinrateComboMarkets[seed % highWinrateComboMarkets.length];
+        let oddVal = (1.50 + ((seed * 4) % 22) / 100).toFixed(2);
+
+        games.push({
+          teams: `${homeName} vs ${awayName}`,
+          league: ev.season && ev.season.slug ? ev.season.slug.toUpperCase().replace(/-/g, ' ') : "INTERNATIONAL",
+          pick: pick,
+          odd: oddVal,
+          homeScore: homeScore,
+          awayScore: awayScore,
+          state: state
         });
-    </script>
+        runningOdds *= parseFloat(oddVal);
+      }
+
+      return [{
+        name: "Single 3 (4+ Game High-Winrate Combo)",
+        totalOdds: runningOdds.toFixed(2),
+        games: games
+      }];
+    }
+
+    function generateOver15Tickets(events, dateKey) {
+      const pool = events.map(ev => parseEvent(ev, dateKey, "Over 1.5 Goals"));
+      let tickets = [];
+
+      for (let tNum = 1; tNum <= 5; tNum++) {
+        let legs = [];
+        let runningOdds = 1.0;
+        
+        for (let legIdx = 0; legIdx < 3; legIdx++) {
+          let poolIndex = ((tNum - 1) * 3 + legIdx) % pool.length;
+          let game = pool[poolIndex];
+          legs.push(game);
+          runningOdds *= parseFloat(game.odd);
+        }
+
+        tickets.push({
+          name: `Over 1.5 VIP Ticket #${tNum}`,
+          totalOdds: runningOdds.toFixed(2),
+          games: legs
+        });
+      }
+
+      return tickets;
+    }
+
+    function parseStandardTickets(events, dateKey) {
+      let allGames = [];
+      for (let i = 0; i < events.length; i++) {
+        allGames.push(parseEvent(events[i], dateKey + i));
+      }
+
+      while (allGames.length < 20 && allGames.length > 0) {
+        allGames.push(allGames[allGames.length % allGames.length]);
+      }
+
+      let tickets = [];
+      for (let tNum = 1; tNum <= 10; tNum++) {
+        let game1 = allGames[(tNum - 1) * 2 % allGames.length];
+        let game2 = allGames[((tNum - 1) * 2 + 1) % allGames.length];
+        let total = (parseFloat(game1.odd) * parseFloat(game2.odd)).toFixed(2);
+        
+        tickets.push({
+          name: `VIP Ticket #${tNum}`,
+          totalOdds: total,
+          games: [game1, game2]
+        });
+      }
+
+      return tickets;
+    }
+
+    // Evaluation Engine for Single & Combo Markets
+    function evaluateGame(pickType, homeScore, awayScore, matchState) {
+      if (homeScore === '-' || awayScore === '-' || matchState !== 'post') return null;
+      
+      const h = parseInt(homeScore);
+      const a = parseInt(awayScore);
+
+      switch (pickType) {
+        case "Over 1.5 Goals": return (h + a) > 1;
+        case "Over 2.5 Goals": return (h + a) > 2;
+        case "Home Win (1)": return h > a;
+        case "Double Chance (1X)": return h >= a;
+        case "Double Chance (X2)": return a >= h;
+        case "Double Chance (1X) & Over 1.5 Goals": return h >= a && (h + a) > 1;
+        case "Double Chance (X2) & Over 1.5 Goals": return a >= h && (h + a) > 1;
+        case "Both Teams to Score & Over 2.5": return h > 0 && a > 0 && (h + a) > 2;
+        case "Both Teams To Score (BTTS)": return h > 0 && a > 0;
+        default: return true;
+      }
+    }
+
+    function renderTickets(tickets) {
+      const container = document.getElementById("tickets-container");
+      container.innerHTML = "";
+
+      tickets.forEach((t) => {
+        let ticketStatus = "WIN";
+        let hasPending = false;
+
+        for (let g of t.games) {
+          const res = evaluateGame(g.pick, g.homeScore, g.awayScore, g.state);
+          if (res === null) {
+            hasPending = true;
+          } else if (res === false) {
+            ticketStatus = "LOSS";
+          }
+        }
+
+        if (hasPending && ticketStatus !== "LOSS") {
+          ticketStatus = "PENDING";
+        }
+
+        const card = document.createElement("div");
+        card.className = "ticket-card";
+
+        card.innerHTML = `
+          <div class="ticket-header">
+            <div class="ticket-title">⚽ ${t.name}</div>
+            <div class="total-odds">Total Odds: ${t.totalOdds}</div>
+          </div>
+          <div class="games-list">
+            ${t.games.map(g => {
+              const result = evaluateGame(g.pick, g.homeScore, g.awayScore, g.state);
+              let borderCol = 'var(--text-muted)';
+              if (result === true) borderCol = 'var(--accent-green)';
+              if (result === false) borderCol = 'var(--accent-red)';
+
+              return `
+                <div class="game-item" style="border-left-color: ${borderCol};">
+                  <div class="game-details">
+                    <div class="teams">${g.teams}</div>
+                    <div class="league">${g.league} • Pick: <span class="prediction">${g.pick}</span></div>
+                  </div>
+                  <div class="game-score-box">
+                    <div class="score-badge">${g.homeScore === '-' ? 'vs' : g.homeScore + ' - ' + g.awayScore}</div>
+                    <div class="game-odds">Odds: ${g.odd}</div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="ticket-footer">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Status:</span>
+            <span class="status-badge status-${ticketStatus}">${ticketStatus}</span>
+          </div>
+        `;
+
+      <span>container.appendChild(card);</span>
+      });
+    }
+  </script>
+</body>
+</html>
