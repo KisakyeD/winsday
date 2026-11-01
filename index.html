@@ -845,7 +845,7 @@
             <div class="total-odds">Total Odds: ${t.totalOdds}</div>
           </div>
           <div class="games-list">
-            ${t.games.main = t.games.map(g => {
+            ${t.games.map(g => {
               const result = evaluateGame(g.pick, g.homeScore, g.awayScore, g.state);
               let borderCol = 'var(--text-muted)';
               if (result === true) borderCol = 'var(--accent-green)';
