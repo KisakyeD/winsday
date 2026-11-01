@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VIP Football Predictions & Live Tips</title>
+  <title>Winsday - VIP Football Predictions</title>
+
+  <!-- Open Graph / WhatsApp Preview Meta Tags -->
+  <meta property="og:title" content="Winsday">
+  <meta property="og:description" content="Get 99% winrate daily football predictions powered by live data. Click to join VIP.">
+  <meta property="og:type" content="website">
 
   <style>
     :root {
@@ -840,7 +845,7 @@
             <div class="total-odds">Total Odds: ${t.totalOdds}</div>
           </div>
           <div class="games-list">
-            ${t.games.map(g => {
+            ${t.games.main = t.games.map(g => {
               const result = evaluateGame(g.pick, g.homeScore, g.awayScore, g.state);
               let borderCol = 'var(--text-muted)';
               if (result === true) borderCol = 'var(--accent-green)';
