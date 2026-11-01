@@ -392,7 +392,7 @@
       <button class="close-btn" onclick="toggleMenu(false)">&times;</button>
     </div>
     <div class="menu-item active" id="menu-standard" onclick="switchCategory('STANDARD')">
-      <span>⚽ Daily VIP Tickets (2 Odds)</span>
+      <span>⚽ Daily VIP Tickets (10 Tickets • 2 Odds)</span>
     </div>
     <div class="menu-item" id="menu-single" onclick="switchCategory('SINGLE')">
       <span>🎯 Daily Single Ticket (1 Pick)</span>
@@ -410,6 +410,10 @@
       <span>🔥 Over 1.5 Goals (5 Tickets • Odd 5+)</span>
       <span style="font-size: 0.7rem; background: #ff0080; color: #fff; padding: 2px 6px; border-radius: 4px;">HOT</span>
     </div>
+    <div class="menu-item" id="menu-odd100" onclick="switchCategory('ODD_100')">
+      <span>💎 Mega Odds 100+ (5 Tickets)</span>
+      <span style="font-size: 0.7rem; background: var(--accent-gold); color: #000; padding: 2px 6px; border-radius: 4px;">JACKPOT</span>
+    </div>
   </div>
 
   <div class="container">
@@ -423,7 +427,7 @@
 
     <!-- Active Banner -->
     <div class="mode-banner" id="mode-banner">
-      <span id="mode-title"><span class="live-dot"></span>Category: Daily VIP Tickets (2 Odds Each)</span>
+      <span id="mode-title"><span class="live-dot"></span>Category: Daily VIP Tickets (10 Tickets • 2 Odds Each)</span>
     </div>
 
     <!-- Stats Dashboard -->
@@ -483,7 +487,7 @@
       const banner = document.getElementById("mode-title");
       if (cat === "STANDARD") {
         document.getElementById("menu-standard").classList.add("active");
-        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets (2 Odds Each)`;
+        banner.innerHTML = `<span class="live-dot"></span>Category: Daily VIP Tickets (10 Tickets • 2 Odds Each)`;
       } else if (cat === "SINGLE") {
         document.getElementById("menu-single").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Daily Single Ticket (1 Pick)`;
@@ -493,9 +497,12 @@
       } else if (cat === "SINGLE_3") {
         document.getElementById("menu-single3").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Single 3 (High-Winrate Safe Combo)`;
-      } else {
+      } else if (cat === "OVER_1_5") {
         document.getElementById("menu-over15").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals (5 VIP Tickets • Odd 5+)`;
+      } else if (cat === "ODD_100") {
+        document.getElementById("menu-odd100").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Mega Odds 100+ (5 VIP Tickets)`;
       }
 
       loadCategoryData(currentDateKey);
@@ -575,6 +582,8 @@
           tickets = generateSingle3ComboTicket(events, dateKey);
         } else if (currentCategory === "OVER_1_5") {
           tickets = generateOver15Tickets(events, dateKey);
+        } else if (currentCategory === "ODD_100") {
+          tickets = generateOdd100Tickets(events, dateKey);
         } else {
           tickets = parseStandardTickets(events, dateKey);
         }
@@ -599,6 +608,16 @@
       const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
       const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
 
+      // Use all leagues available in the global feed instead of filtering
+      let leagueName = "INTERNATIONAL";
+      if (ev.season && ev.season.slug) {
+        leagueName = ev.season.slug.toUpperCase().replace(/-/g, ' ');
+      } else if (ev.league && ev.league.name) {
+        leagueName = ev.league.name.toUpperCase();
+      } else if (comp.type && comp.type.text) {
+        leagueName = comp.type.text.toUpperCase();
+      }
+
       const cleanSinglePicks = ["Double Chance (1X)", "Over 1.5 Goals", "Home Win (1)", "Double Chance (X2)"];
       let seed = (homeName + awayName + dateKey).length;
       const pick = pickTypeOverride || cleanSinglePicks[seed % cleanSinglePicks.length];
@@ -607,7 +626,7 @@
 
       return {
         teams: `${homeName} vs ${awayName}`,
-        league: ev.season && ev.season.slug ? ev.season.slug.toUpperCase().replace(/-/g, ' ') : "INTERNATIONAL",
+        league: leagueName,
         pick: pick,
         odd: oddVal,
         homeScore: homeScore,
@@ -650,13 +669,20 @@
         const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
         const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
 
+        let leagueName = "INTERNATIONAL";
+        if (ev.season && ev.season.slug) {
+          leagueName = ev.season.slug.toUpperCase().replace(/-/g, ' ');
+        } else if (ev.league && ev.league.name) {
+          leagueName = ev.league.name.toUpperCase();
+        }
+
         let seed = (homeName + awayName + dateKey + i).length;
         const pick = highWinrateComboMarkets[seed % highWinrateComboMarkets.length];
         let oddVal = (1.50 + ((seed * 4) % 22) / 100).toFixed(2);
 
         games.push({
           teams: `${homeName} vs ${awayName}`,
-          league: ev.season && ev.season.slug ? ev.season.slug.toUpperCase().replace(/-/g, ' ') : "INTERNATIONAL",
+          league: leagueName,
           pick: pick,
           odd: oddVal,
           homeScore: homeScore,
@@ -690,6 +716,42 @@
 
         tickets.push({
           name: `Over 1.5 VIP Ticket #${tNum}`,
+          totalOdds: runningOdds.toFixed(2),
+          games: legs
+        });
+      }
+
+      return tickets;
+    }
+
+    function generateOdd100Tickets(events, dateKey) {
+      let allGames = [];
+      for (let i = 0; i < events.length; i++) {
+        let baseGame = parseEvent(events[i], dateKey + i);
+        baseGame.odd = (2.10 + (i % 5) * 0.15).toFixed(2);
+        allGames.push(baseGame);
+      }
+
+      while (allGames.length < 35 && allGames.length > 0) {
+        allGames.push(allGames[allGames.length % allGames.length]);
+      }
+
+      let tickets = [];
+      const legCount = 6;
+
+      for (let tNum = 1; tNum <= 5; tNum++) {
+        let legs = [];
+        let runningOdds = 1.0;
+
+        for (let l = 0; l < legCount; l++) {
+          let gameIdx = ((tNum - 1) * legCount + l) % allGames.length;
+          let game = allGames[gameIdx];
+          legs.push(game);
+          runningOdds *= parseFloat(game.odd);
+        }
+
+        tickets.push({
+          name: `Mega Odds 100+ Ticket #${tNum}`,
           totalOdds: runningOdds.toFixed(2),
           games: legs
         });
