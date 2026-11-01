@@ -418,6 +418,10 @@
       <span>⏱️ Half-Time Picks (HT 1X2 / Over 0.5)</span>
       <span style="font-size: 0.7rem; background: #00e676; color: #000; padding: 2px 6px; border-radius: 4px;">HT</span>
     </div>
+    <div class="menu-item" id="menu-btts" onclick="switchCategory('BTTS_5')">
+      <span>⚽ Both Teams To Score (5 Tickets Daily)</span>
+      <span style="font-size: 0.7rem; background: #ff9100; color: #000; padding: 2px 6px; border-radius: 4px;">BTTS</span>
+    </div>
     <div class="menu-item" id="menu-over15" onclick="switchCategory('OVER_1_5')">
       <span>🔥 Over 1.5 Goals (Safe Low Odds)</span>
       <span style="font-size: 0.7rem; background: #ff0080; color: #fff; padding: 2px 6px; border-radius: 4px;">HOT</span>
@@ -514,6 +518,9 @@
       } else if (cat === "HT_ONLY") {
         document.getElementById("menu-ht").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Half-Time Picks (HT 1X2 & Over 0.5 HT Goals)`;
+      } else if (cat === "BTTS_5") {
+        document.getElementById("menu-btts").classList.add("active");
+        banner.innerHTML = `<span class="live-dot"></span>Category: Both Teams To Score (5 VIP Tickets Daily)`;
       } else {
         document.getElementById("menu-over15").classList.add("active");
         banner.innerHTML = `<span class="live-dot"></span>Category: Over 1.5 Goals (Safe Low Odds)`;
@@ -600,6 +607,8 @@
           tickets = generateHTFTTickets(events, dateKey);
         } else if (currentCategory === "HT_ONLY") {
           tickets = generateHTOnlyTickets(events, dateKey);
+        } else if (currentCategory === "BTTS_5") {
+          tickets = generateBTTSTickets(events, dateKey);
         } else if (currentCategory === "OVER_1_5") {
           tickets = generateOver15Tickets(events, dateKey);
         } else {
@@ -821,6 +830,52 @@
       return tickets;
     }
 
+    function generateBTTSTickets(events, dateKey) {
+      let tickets = [];
+
+      for (let tNum = 1; tNum <= 5; tNum++) {
+        let legs = [];
+        let runningOdds = 1.0;
+
+        for (let legIdx = 0; legIdx < 2; legIdx++) {
+          let eventIndex = ((tNum - 1) * 2 + legIdx) % events.length;
+          let ev = events[eventIndex];
+
+          const comp = ev.competitions[0];
+          const homeComp = comp.competitors.find(c => c.homeAway === 'home');
+          const awayComp = comp.competitors.find(c => c.homeAway === 'away');
+          const state = comp.status.type.state;
+
+          const homeName = homeComp.team.shortDisplayName || homeComp.team.displayName;
+          const awayName = awayComp.team.shortDisplayName || awayComp.team.displayName;
+          const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
+          const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
+
+          let seed = (homeName + awayName + dateKey + tNum + legIdx).length;
+          let oddVal = (1.65 + ((seed * 4) % 35) / 100).toFixed(2);
+
+          legs.push({
+            teams: `${homeName} vs ${awayName}`,
+            league: ev.season && ev.season.slug ? ev.season.slug.toUpperCase().replace(/-/g, ' ') : "INTERNATIONAL",
+            pick: "Both Teams To Score (Yes)",
+            odd: oddVal,
+            homeScore: homeScore,
+            awayScore: awayScore,
+            state: state
+          });
+          runningOdds *= parseFloat(oddVal);
+        }
+
+        tickets.push({
+          name: `BTTS VIP Ticket #${tNum}`,
+          totalOdds: runningOdds.toFixed(2),
+          games: legs
+        });
+      }
+
+      return tickets;
+    }
+
     function generateOver15Tickets(events, dateKey) {
       const pool = events.map(ev => parseEvent(ev, dateKey, "Over 1.5 Goals"));
       let tickets = [];
@@ -867,6 +922,10 @@
       
       const h = parseInt(homeScore);
       const a = parseInt(awayScore);
+
+      if (pickType === "Both Teams To Score (Yes)") {
+        return h > 0 && a > 0;
+      }
 
       if (pickType.startsWith("HT ")) {
         if (pickType === "HT Over 0.5 Goals") return (h + a) > 0;
