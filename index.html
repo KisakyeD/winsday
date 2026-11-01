@@ -599,7 +599,6 @@
       const homeScore = (state === 'pre') ? '-' : (homeComp.score || '0');
       const awayScore = (state === 'pre') ? '-' : (awayComp.score || '0');
 
-      // Clean single pick markets only (No multi-market combos)
       const cleanSinglePicks = ["Double Chance (1X)", "Over 1.5 Goals", "Home Win (1)", "Double Chance (X2)"];
       let seed = (homeName + awayName + dateKey).length;
       const pick = pickTypeOverride || cleanSinglePicks[seed % cleanSinglePicks.length];
@@ -725,7 +724,6 @@
       return tickets;
     }
 
-    // Evaluation Engine for Single & Combo Markets
     function evaluateGame(pickType, homeScore, awayScore, matchState) {
       if (homeScore === '-' || awayScore === '-' || matchState !== 'post') return null;
       
@@ -802,7 +800,7 @@
           </div>
         `;
 
-      <span>container.appendChild(card);</span>
+        container.appendChild(card);
       });
     }
   </script>
